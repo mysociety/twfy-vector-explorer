@@ -6,7 +6,7 @@
 	}},
 	"dockerComposeFile": ["../docker-compose.yml"],
 	"service": "web",
-	"workspaceFolder": "/app",
+	"workspaceFolder": "/workspaces/twfy-vector-explorer/",
 	"overrideCommand": true,
 	"customizations": {"vscode":{"extensions": [
 		"ms-vscode.test-adapter-converter",

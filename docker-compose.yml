@@ -13,7 +13,7 @@ services:
       - PGPASSWORD=${REPOSITORY_DB_PASS:-vector}
       - PGDATABASE=${REPOSITORY_DB_NAME:-vector}
     volumes:
-      - ./:/workspaces/motion_detector/
+      - ./:/workspaces/twfy-vector-explorer/
     depends_on:
       - postgres
 

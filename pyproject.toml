@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "local-intelligence-hub"
+name = "twfy-vector-explorer"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-
+python = "^3.9"
 
 [tool.poetry.dev-dependencies]
 ruff = "^0.4.9"

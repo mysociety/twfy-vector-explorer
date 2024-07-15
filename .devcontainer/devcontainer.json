@@ -5,7 +5,7 @@
 		"description": "Hugging face API query (optional)"
 	}},
 	"dockerComposeFile": ["../docker-compose.yml"],
-	"service": "web",
+	"service": "app",
 	"workspaceFolder": "/workspaces/twfy-vector-explorer/",
 	"overrideCommand": true,
 	"customizations": {"vscode":{"extensions": [

@@ -1,0 +1,30 @@
+services:
+  app:
+    image: mysociety/twfy_vector_explorer:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /workspaces/twfy-vector-explorer
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-xxx}
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGUSER=${REPOSITORY_DB_USER:-vector}
+      - PGPASSWORD=${REPOSITORY_DB_PASS:-vector}
+      - PGDATABASE=${REPOSITORY_DB_NAME:-vector}
+    volumes:
+      - ./:/workspaces/motion_detector/
+    depends_on:
+      - postgres
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=${REPOSITORY_DB_USER:-vector}
+      - POSTGRES_PASSWORD=${REPOSITORY_DB_PASS:-vector}
+      - POSTGRES_DB=${REPOSITORY_DB_NAME:-vector}
+
+volumes:
+  postgres_data:

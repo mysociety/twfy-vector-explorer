@@ -13,6 +13,7 @@ class Inference:
     Uses hugging faces free api if not local, but setting local
     will use fastembed's approach
     """
+
     def __init__(
         self, model_id: str, hf_token: Optional[str] = None, local: bool = False
     ):

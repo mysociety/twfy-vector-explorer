@@ -33,6 +33,7 @@ class TranscriptType(str, Enum):
     WRITTEN_QUESTIONS = "written_questions"
     WRITTEN_STATEMENTS = "written_statements"
 
+
 class ChamberType(str, Enum):
     UK_COMMONS = "uk_commons"
     UK_LORDS = "uk_lords"
@@ -48,12 +49,11 @@ class XMLManager(BaseModel):
     transcript_type: TranscriptType
     chamber_type: ChamberType
 
-    def path_options(self, pattern:str):
+    def path_options(self, pattern: str):
         dest_dir = data_dir / self.relative_path
 
         for file_path in dest_dir.glob(f"{self.file_structure_pre_date}{pattern}*"):
             yield file_path
-
 
     def validate_year(self, year: int):
         for file_path in self.path_options(str(year)):
@@ -75,7 +75,9 @@ class XMLManager(BaseModel):
     def download_year(self, year: int):
         self.download_pattern(str(year))
 
-    def get_date(self, date: datetime.date, update_download: bool = False) -> Optional[DailyRecord]:
+    def get_date(
+        self, date: datetime.date, update_download: bool = False
+    ) -> Optional[DailyRecord]:
         iso_date = date.isoformat()
         if update_download:
             self.download_pattern(iso_date)

@@ -10,6 +10,7 @@ from .tools.model_helpers import field
 
 FloatArray384 = Annotated[NDArray[np.float64], 384]
 
+
 class ParagraphVector(models.Model):
     speech_id = models.CharField()
     paragraph_id = models.CharField()

@@ -97,7 +97,9 @@ class DivisionCount(BaseXMLModel, tag="divisioncount"):
 
 class RepName(BaseXMLModel, tag=["mpname", "mspname", "msname", "mlaname", "lord"]):
     tag: StrXMLTag
-    person_id: str = Field(validation_alias=AliasChoices("person_id", "id")) # scotland uses id rather than person_id
+    person_id: str = Field(
+        validation_alias=AliasChoices("person_id", "id")
+    )  # scotland uses id rather than person_id
     vote: str
     proxy: Optional[str] = None
     name: StrItemContents

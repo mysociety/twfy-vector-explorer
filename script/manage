@@ -3,4 +3,10 @@
 # check that we are in the expected directory
 cd `dirname $0`/..
 
-script/dev-command ./src/manage.py "$@"
+# if nothing has been passed in, show the help
+if [ $# -eq 0 ]; then
+    script/dev-command python -m django help --settings=twfy_vector_explorer.settings
+    exit
+else
+    script/dev-command python -m django "$@" --settings=twfy_vector_explorer.settings
+fi

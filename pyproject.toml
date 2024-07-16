@@ -5,11 +5,20 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.10"
+django = "4.2.14"
+pgvector = "^0.3.1"
+pydantic = "^2.8.2"
+lxml = "^5.2.2"
+fastembed = "^0.3.4"
+sysrsync = "^1.1.1"
 
 [tool.poetry.dev-dependencies]
 ruff = "^0.4.9"
 
+
+[tool.poetry.group.dev.dependencies]
+pgcli = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -1,21 +1,19 @@
 {
     "python.defaultInterpreterPath": "/usr/local/bin/python",
-
-    "editor.formatOnSave": false,
-    "[python]": {
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit"
-        },
+    "python.analysis.typeCheckingMode": "basic",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
     },
-
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
         "**/.hg": true,
         "**/CVS": true,
         "**/.DS_Store": true,
-        "**/*.pyc": {"when": "$(basename).py"}, 
+        "**/*.pyc": {
+            "when": "$(basename).py"
+        },
         "**/__pycache__": true
     },
     "files.associations": {

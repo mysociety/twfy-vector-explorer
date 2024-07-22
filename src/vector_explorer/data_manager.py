@@ -1,40 +1,26 @@
 import datetime
-from enum import Enum
 from pathlib import Path
-from typing import Generic, Iterator, Optional, Type, TypeVar
+from typing import Optional
 
+import pandas as pd
 import sysrsync
 from pydantic import BaseModel
+from tqdm import tqdm
+
 from vector_explorer.data_models.transcripts import DailyRecord
+from vector_explorer.tools.inference import Inference
+from vector_explorer.tools.model_helpers import MiniEnum, StrEnum
 
 data_dir = Path("data", "pwdata")
 
-T = TypeVar("T")
 
-
-class MiniEnum(Generic[T]):
-    _enum_type: Type[T]
-
-    def __class_getitem__(cls, item: Type[T]):
-        class modified_cls(cls):
-            _enum_type: Type[T] = item
-
-        return modified_cls
-
-    @classmethod
-    def options(cls) -> Iterator[T]:
-        for option in cls.__dict__.values():
-            if isinstance(option, cls._enum_type):
-                yield option
-
-
-class TranscriptType(str, Enum):
+class TranscriptType(StrEnum):
     DEBATES = "debates"
     WRITTEN_QUESTIONS = "written_questions"
     WRITTEN_STATEMENTS = "written_statements"
 
 
-class ChamberType(str, Enum):
+class ChamberType(StrEnum):
     UK_COMMONS = "uk_commons"
     UK_LORDS = "uk_lords"
     SCOTTISH_PARLIAMENT = "scottish_parliament"
@@ -49,7 +35,35 @@ class XMLManager(BaseModel):
     transcript_type: TranscriptType
     chamber_type: ChamberType
 
-    def path_options(self, pattern: str):
+    def infer_missing(self, pattern: str = "", override: bool = False):
+        dest_dir = data_dir / self.relative_path
+        infer = Inference(model_id="BAAI/bge-small-en-v1.5", local=False)
+
+        for file_path in tqdm(
+            list(dest_dir.glob(f"{self.file_structure_pre_date}{pattern}*.xml")),
+            desc="Infering missing embeddings",
+        ):
+            embeddings_file = file_path.with_suffix(".parquet")
+            if not embeddings_file.exists() or override:
+                record = DailyRecord.from_path(file_path)
+                data = dict(record.iter_headings_and_paragraphs())
+                df = infer.query_id_and_text(data)
+                df.to_parquet(embeddings_file)
+
+    def get_embeddings(self, pattern: str = "", infer_missing: bool = False):
+        dest_dir = data_dir / self.relative_path
+        if infer_missing:
+            self.infer_missing(pattern)
+
+        for file_path in dest_dir.glob(
+            f"{self.file_structure_pre_date}{pattern}*.parquet"
+        ):
+            df = pd.read_parquet(file_path)
+            df["transcript_type"] = self.transcript_type
+            df["chamber_type"] = self.chamber_type
+            yield file_path, df
+
+    def path_options(self, pattern: str = ""):
         dest_dir = data_dir / self.relative_path
 
         for file_path in dest_dir.glob(f"{self.file_structure_pre_date}{pattern}*"):
@@ -125,11 +139,16 @@ class TranscriptXMl(MiniEnum[XMLManager]):
     )
 
     @classmethod
-    def get_transcript(cls, chamber: ChamberType, transcript: TranscriptType):
+    def get_transcript_manager(
+        cls,
+        chamber: Optional[str] = None,
+        transcript: Optional[str] = None,
+    ):
         for option in cls.options():
-            if option.chamber_type == chamber and option.transcript_type == transcript:
-                return option
-        return None
+            if (chamber is None or option.chamber_type == chamber) and (
+                transcript is None or option.transcript_type == transcript
+            ):
+                yield option
 
     @classmethod
     def download_all_debates(cls, year: int):

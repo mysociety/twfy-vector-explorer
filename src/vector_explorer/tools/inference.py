@@ -2,6 +2,7 @@ import os
 from typing import Optional
 
 import numpy as np
+import pandas as pd
 import requests
 from fastembed import TextEmbedding
 from numpy.typing import NDArray
@@ -35,9 +36,23 @@ class Inference:
             headers=headers,
             json={"inputs": texts, "options": {"wait_for_model": True}},
         )
-        return [np.array(x) for x in response.json()]
+        return response.json()
+
+    def query_id_and_text(self, id_and_text: dict[str, str]) -> pd.DataFrame:
+        id_values = list(id_and_text.keys())
+        text_values = list(id_and_text.values())
+        embeddings = self.query(text_values)
+        return pd.DataFrame(
+            {
+                "id": id_values,
+                "text": text_values,
+                "embedding": embeddings,
+            }
+        )
 
     def query(self, texts: list[str]):
+        if len(texts) == 0:
+            return []
         if self.local:
             return self.query_local(texts)
         else:

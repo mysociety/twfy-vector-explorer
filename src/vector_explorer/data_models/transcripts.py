@@ -5,14 +5,16 @@ from typing import (
     Iterator,
     Literal,
     Optional,
+    Protocol,
     Type,
     TypeVar,
     Union,
+    runtime_checkable,
 )
 
 from pydantic import AliasChoices, Field
 
-from .helpers.xml_base import BaseXMLModel, XmlTypeMetaData
+from ..tools.xml_base import BaseXMLModel, XmlTypeMetaData
 
 T = TypeVar("T", bound=BaseXMLModel)
 StrItemContents = Annotated[str, XmlTypeMetaData.ItemContents]
@@ -21,6 +23,14 @@ StrItemContentsReadOnly = Annotated[
 ]
 XMLItemContents = Annotated[str, XmlTypeMetaData.XMLItemContents]
 StrXMLTag = Annotated[str, XmlTypeMetaData.XMLTag]
+
+
+@runtime_checkable
+class HasText(Protocol):
+    def as_str(self) -> str: ...
+
+    @property
+    def id(self) -> str: ...
 
 
 class GIDRedirect(BaseXMLModel, tag="gidredirect"):
@@ -37,6 +47,9 @@ class OralHeading(BaseXMLModel, tag="oral-heading"):
     url: str
     text: StrItemContents
 
+    def as_str(self):
+        return self.text
+
 
 class MajorHeading(BaseXMLModel, tag="major-heading"):
     id: str
@@ -46,6 +59,9 @@ class MajorHeading(BaseXMLModel, tag="major-heading"):
     url: str = ""
     text: StrItemContents
 
+    def as_str(self):
+        return self.text
+
 
 class MinorHeading(BaseXMLModel, tag="minor-heading"):
     id: str
@@ -54,6 +70,9 @@ class MinorHeading(BaseXMLModel, tag="minor-heading"):
     time: Optional[str] = None
     url: Optional[str] = None
     text: StrItemContents
+
+    def as_str(self):
+        return self.text
 
 
 class SpeechItem(BaseXMLModel, tag="*"):
@@ -82,6 +101,9 @@ class Speech(BaseXMLModel, tag="speech"):
         validation_alias="oral-qnum", serialization_alias="oral-qnum", default=None
     )
     items: list[SpeechItem]
+
+    def as_str(self):
+        return "\n".join(item.contents_text for item in self.items)
 
 
 class DivisionCount(BaseXMLModel, tag="divisioncount"):
@@ -124,6 +146,17 @@ class RepList(BaseXMLModel, tag=["mplist", "msplist", "mslist", "mlalist", "lord
     items: list[RepName]
 
 
+class Motion(BaseXMLModel, tag="motion"):
+    speech_id: str
+    text: StrItemContents
+
+
+class Agreement(BaseXMLModel, tag="agreement"):
+    speech_id: str
+    nospeaker: Optional[bool] = True
+    motion: Optional[Motion] = None
+
+
 class Division(BaseXMLModel, tag="division"):
     nospeaker: Optional[bool] = None
     divdate: str
@@ -131,6 +164,7 @@ class Division(BaseXMLModel, tag="division"):
     colnum: Optional[int] = None
     time: Optional[str] = None
     count: DivisionCount
+    motion: Optional[Motion] = None
     items: list[RepList]
 
 
@@ -140,7 +174,15 @@ class DailyRecord(BaseXMLModel, tag="publicwhip"):
     )
     latest: Optional[str] = Field(default=None, validation_alias="latest")
     items: list[
-        Union[Speech, Division, GIDRedirect, OralHeading, MajorHeading, MinorHeading]
+        Union[
+            Speech,
+            Division,
+            GIDRedirect,
+            OralHeading,
+            MajorHeading,
+            MinorHeading,
+            Agreement,
+        ]
     ]
 
     def __iter__(self):
@@ -151,3 +193,20 @@ class DailyRecord(BaseXMLModel, tag="publicwhip"):
 
     def iter_speeches(self):
         return self.iter_type(Speech)
+
+    def iter_has_text(self) -> Iterator[HasText]:
+        return (item for item in self.items if isinstance(item, HasText))
+
+    def iter_headings_and_paragraphs(self) -> Iterator[tuple[str, str]]:
+        for speech in self.iter_has_text():
+            if isinstance(speech, Speech):
+                for paragraph in speech.items:
+                    s_id = speech.id
+                    if paragraph.pid:
+                        s_id += f"#{paragraph.pid}"
+                    yield (
+                        s_id,
+                        paragraph.contents_text.strip(),
+                    )
+            else:
+                yield speech.id, speech.as_str()

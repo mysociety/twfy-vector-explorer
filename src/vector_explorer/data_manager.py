@@ -50,6 +50,11 @@ class XMLManager(BaseModel):
                 df = infer.query_id_and_text(data)
                 df.to_parquet(embeddings_file)
 
+    def get_embeddings_n(self, pattern: str = "") -> int:
+        dest_dir = data_dir / self.relative_path
+        items = list(dest_dir.glob(f"{self.file_structure_pre_date}{pattern}*.xml"))
+        return len(items)
+
     def get_embeddings(self, pattern: str = "", infer_missing: bool = False):
         dest_dir = data_dir / self.relative_path
         if infer_missing:

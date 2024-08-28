@@ -72,14 +72,16 @@ class ParagraphVector(models.Model):
         ]
 
     @classmethod
-    def ingest_df(cls, *, source_file: str, df: pd.DataFrame, verbose: bool = True):
+    def ingest_df(
+        cls, *, source_file: str, df: pd.DataFrame, verbose: bool = True, defer=False
+    ):
         # delete existing records for this source file
 
         if verbose:
             print(f"Loading {len(df)} records for {source_file}")
 
         cls.objects.filter(source_file=source_file).delete()
-        to_create = []
+        to_create: list[cls] = []
 
         for _, row in df.iterrows():
             to_create.append(
@@ -92,5 +94,7 @@ class ParagraphVector(models.Model):
                     embedding=row["embedding"],
                 )
             )
-
-        cls.objects.bulk_create(to_create)
+        if defer:
+            return to_create
+        else:
+            cls.objects.bulk_create(to_create)

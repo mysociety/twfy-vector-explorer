@@ -42,6 +42,9 @@ class Inference:
         id_values = list(id_and_text.keys())
         text_values = list(id_and_text.values())
         embeddings = self.query(text_values)
+        if isinstance(embeddings, dict):
+            # This catches and prints any hugging face errors
+            print(embeddings)
         return pd.DataFrame(
             {
                 "id": id_values,

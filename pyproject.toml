@@ -16,6 +16,10 @@ rich = "^13.7.1"
 pandas = "^2.2.2"
 tqdm = "^4.66.4"
 pyarrow = "^17.0.0"
+django-stubs = "^5.0.4"
+django-types = "^0.19.1"
+nltk = "^3.9.1"
+duckdb = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 ruff = "^0.4.9"

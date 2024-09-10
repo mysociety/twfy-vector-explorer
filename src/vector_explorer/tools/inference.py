@@ -21,12 +21,14 @@ class Inference:
         self.model_id: str = model_id
         self.hf_token = hf_token if hf_token else os.environ.get("HF_TOKEN", None)
         self.local = local
+        self._model = None
         if self.hf_token is None and self.local is False:
             raise ValueError("Need to set hf_token for remote embedding generation.")
 
     def query_local(self, texts: list[str]) -> list[NDArray[np.float64]]:
-        model = TextEmbedding(model_name=self.model_id)
-        return list(model.embed(texts))
+        if self._model is None:
+            self._model = TextEmbedding(model_name=self.model_id)
+        return list(self._model.embed(texts))
 
     def query_remote(self, texts: list[str]) -> list[NDArray[np.float64]]:
         api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{self.model_id}"

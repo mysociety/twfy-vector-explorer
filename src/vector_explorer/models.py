@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Annotated, Callable, TypeVar, Union
 
 from django.db import models
@@ -17,6 +18,9 @@ FloatArray384 = Annotated[NDArray[np.float64], 384]
 
 M = TypeVar("M", bound=models.Model, covariant=True)
 
+@lru_cache
+def get_local_inference() -> Inference:
+    return Inference(model_id="BAAI/bge-small-en-v1.5", local=True)
 
 class DistanceQuerySet(models.QuerySet):
     """
@@ -27,7 +31,7 @@ class DistanceQuerySet(models.QuerySet):
         return item(self)
 
     def search_distance(self, search_term: str, threshold: float = 0.4):
-        infer = Inference(model_id="BAAI/bge-small-en-v1.5", local=False)
+        infer = get_local_inference()
         embedding = infer.query([search_term])[0]
 
         return (
@@ -98,3 +102,21 @@ class ParagraphVector(models.Model):
             return to_create
         else:
             cls.objects.bulk_create(to_create)
+
+
+class NgramVector(models.Model):
+    text = models.TextField()
+    count = models.IntegerField()
+    embedding: FloatArray384 = field(VectorField, dimensions=384)
+    objects: DistanceQuerySet[ParagraphVector] = DistanceQuerySet.as_manager()  # type: ignore
+
+    class Meta:
+        indexes = [
+            HnswIndex(
+                name="ngram_nhsw_index",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
+        ]
